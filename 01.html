@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>من يحق له الاطلاع على ملفي؟</title>
+<style>
+/* VOICE: clinical-legal, calm and exact — a hospital records console that reasons out loud.
+   IDEA: an access-request slip passing through four legal checkpoints, stamped at the end.
+   PICTURE: the live four-stage pipeline with the gap between "what the system can open" and "what is lawful".
+   COLOUR and TYPE: the solution's own deep purple + lavender; green / crimson / amber only for verdicts. Abd ElRady.
+   LAYOUT: purple header band → simulator (request | verdict) → decision log → framework → legal basis → closing line. */
+@font-face{font-family:'AbdElRady';src:url('abd-regular.otf') format('opentype');font-weight:400}
+@font-face{font-family:'AbdElRady';src:url('abd-bold.otf') format('opentype');font-weight:700}
+:root{color-scheme:light dark;
+--bg:light-dark(#F6F3FA,#17121F);--card:light-dark(#FFFFFF,#221B2D);--ink:light-dark(#241735,#EEE8F6);--mute:light-dark(#6B5D80,#B3A6C6);
+--line:light-dark(#E3DAEE,#3A2F4A);--pu:#4A2A6E;--pu2:light-dark(#4A2A6E,#B79BE0);--lav:light-dark(#E9E0F5,#33284A);
+--ok:light-dark(#1F7A4D,#4CC38A);--okb:light-dark(#E3F3EA,#173528);--no:light-dark(#9B2335,#F0798A);--nob:light-dark(#F8E4E7,#3A1A21);
+--rv:light-dark(#A86A12,#E8B15A);--rvb:light-dark(#FBF0DD,#3A2C14)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 'AbdElRady',system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(24px,4vw,56px) max(5vw,16px)}.wrap{max-width:1240px;margin:0 auto}
+header{background:#4A2A6E;color:#fff;border-bottom:6px solid #B79BE0}
+.top{display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
+.logos{display:flex;gap:18px;align-items:center}.logos img{height:64px;width:auto}.logos i{width:1px;height:52px;background:#ffffff55}
+.tag{display:inline-block;border:1px solid #ffffff66;border-radius:99px;padding:2px 14px;font-size:14px}
+h1{font-size:clamp(32px,5vw,52px);line-height:1.1;margin:10px 0 4px;text-wrap:balance}
+.en{direction:ltr;text-align:right;font-size:14px;opacity:.8;margin:0}
+.lead{max-width:62ch;margin:18px 0 0;font-size:17px;opacity:.95}
+.gapbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;margin-top:22px;max-width:720px}
+.gapbar div{background:#ffffff1a;border:1px solid #ffffff40;border-radius:12px;padding:10px 14px;font-size:15px}.gapbar b{display:block;font-size:17px}
+.gapbar span{font-size:13px;text-align:center;opacity:.85}
+h2{font-size:clamp(24px,3vw,32px);line-height:1.15;margin:0 0 6px}.sub{color:var(--mute);margin:0 0 20px}
+.sim{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:22px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+label{display:block;font-weight:700;font-size:15px;margin:14px 0 6px}
+select,textarea{width:100%;font:16px 'AbdElRady',system-ui;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+textarea{min-height:64px;resize:vertical}
+select:focus,textarea:focus,button:focus-visible,input:focus-visible{outline:3px solid #B79BE0;outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{margin:0;display:flex;font-weight:400;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px;background:var(--bg)}
+.chip input{accent-color:#4A2A6E;width:18px;height:18px}
+.tog{display:flex;align-items:center;gap:10px;font-weight:400;margin:8px 0;cursor:pointer}.tog input{accent-color:#4A2A6E;width:20px;height:20px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.presets button{flex:none}
+button{font:700 15px 'AbdElRady',system-ui;border-radius:12px;min-height:44px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+button.pri{background:#4A2A6E;border-color:#4A2A6E;color:#fff;width:100%;font-size:18px;margin-top:18px}
+button.on{background:var(--lav);border-color:var(--pu2)}
+.stages{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.st{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--bg);transition:background .3s,border-color .3s}
+.st .n{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--lav);color:var(--pu2)}
+.st b{display:block}.st small{color:var(--mute);font-size:14px;display:block}
+.st .v{font-weight:700;font-size:14px;border-radius:99px;padding:3px 12px;white-space:nowrap}
+.st.pass{border-color:var(--ok);background:var(--okb)}.st.pass .v{background:var(--ok);color:#fff}
+.st.fail{border-color:var(--no);background:var(--nob)}.st.fail .v{background:var(--no);color:#fff}
+.st.rev{border-color:var(--rv);background:var(--rvb)}.st.rev .v{background:var(--rv);color:#fff}
+.st.skip{opacity:.5}
+.verdict{margin-top:16px;border-radius:16px;padding:18px 20px;color:#fff}
+.verdict h3{margin:0;font-size:clamp(24px,3vw,30px);line-height:1.2}.verdict p{margin:6px 0 0}
+.v-ok{background:#1F7A4D}.v-no{background:#9B2335}.v-rv{background:#A86A12}.v-idle{background:var(--lav);color:var(--ink)}
+.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:16px}
+.cmp h4{margin:0 0 8px;font-size:15px}.cmp ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.cmp li{border-radius:8px;padding:5px 10px;font-size:14px;background:var(--bg);border:1px solid var(--line)}
+.cmp li.g{background:var(--okb);border-color:var(--ok)}.cmp li.x{background:var(--nob);border-color:var(--no);color:var(--no)}
+.rec{margin-top:16px;border:1px dashed var(--pu2);border-radius:14px;padding:14px 16px;font-size:14px}
+.rec dl{display:grid;grid-template-columns:9em minmax(0,1fr);gap:4px 12px;margin:8px 0 0}.rec dt{color:var(--mute)}.rec dd{margin:0}
+.rechead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.law{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.law span{background:var(--lav);color:var(--pu2);border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:right;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#4A2A6E;color:#fff;font-weight:700}.scroll{overflow-x:auto}
+.pill{border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap}
+.kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px}.kpis div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 16px}.kpis b{font-size:26px;display:block;line-height:1.2}
+.layers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.layers .card h3{margin:0;font-size:21px}.layers .card .k{color:var(--mute);font-size:13px}
+.layers .mid{background:#4A2A6E;color:#fff;border-color:#4A2A6E}.layers .mid .k{color:#D9C8F0}
+.layers ul{margin:10px 0 0;padding-inline-start:18px}
+.loop{margin-top:12px;border-top:2px dashed var(--pu2);padding-top:10px;color:var(--pu2);font-weight:700;text-align:center}
+.who{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}.who .card b{display:block;margin-bottom:4px}
+.quote{background:#4A2A6E;color:#fff;text-align:center}.quote p{font-size:clamp(20px,2.6vw,28px);font-weight:700;max-width:900px;margin:0 auto;line-height:1.5}
+.note{font-size:13px;color:var(--mute);margin-top:12px}
+.empty{color:var(--mute);text-align:center;padding:18px}
+@media(max-width:900px){.sim,.layers{grid-template-columns:minmax(0,1fr)}.who{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.cmp,.who{grid-template-columns:minmax(0,1fr)}.rec dl{grid-template-columns:7em minmax(0,1fr)}.logos img{height:48px}
+table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:7.5em}.stack td::before{content:attr(data-l);float:inline-start;width:7em;margin-inline-start:-7.5em;color:var(--mute)}.stack td:empty{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <div class="top">
+    <div><a href="index.html" style="color:#fff;display:inline-block;margin-bottom:10px;font-size:15px">→ جميع التحديات</a><br><span class="tag">SECURE CARE HACKATHON · المسار القانوني | التحدي 01</span>
+      <h1>من يحق له الاطلاع على ملفي؟</h1>
+      <p class="en">WHO HAS THE RIGHT TO ACCESS MY MEDICAL RECORD? · LEGAL ACCESS GOVERNANCE</p></div>
+    <div class="logos"><img src="kku.png" alt="جامعة الملك خالد – عمادة شؤون الطلاب"><i></i><img src="club.png" alt="نادي الكلية التطبيقية بمحايل"></div>
+  </div>
+  <p class="lead">محاكاة لإطار الحوكمة القانونية للوصول إلى البيانات الصحية: قدّم طلب اطلاع على ملف مريض، وتابع كيف يمر بمراحل التحقق الأربع قبل أن يصدر قرار موثّق قابل للمساءلة.</p>
+  <div class="gapbar" aria-label="الفجوة القانونية">
+    <div><b>صلاحية المستخدم العامة</b>ما يستطيع النظام فتحه</div>
+    <span>الفجوة<br>غياب الربط</span>
+    <div><b>مشروعية عملية الوصول</b>لمريض محدد ولغرض محدد</div>
+  </div>
+</div></header>
+
+<main>
+<section class="band" id="simulator"><div class="wrap">
+  <h2>محاكي طلب الوصول</h2>
+  <p class="sub">اختر سيناريو جاهزًا أو عدّل الطلب بنفسك، ثم اضغط «تقييم الطلب». جميع الأسماء والملفات افتراضية.</p>
+  <div class="sim">
+    <form class="card" id="req">
+      <div class="presets" id="presets" aria-label="سيناريوهات جاهزة"></div>
+      <label for="role">المستخدم</label>
+      <select id="role"></select>
+      <label for="patient">المريض</label>
+      <select id="patient"></select>
+      <label for="purpose">الغرض من الاطلاع</label>
+      <select id="purpose"></select>
+      <label class="tog"><input type="checkbox" id="rel"> توجد علاقة مهنية قائمة بهذا المريض أو تكليف بالمهمة</label>
+      <label class="tog"><input type="checkbox" id="ethics"> موافقة لجنة أخلاقيات البحث (للأبحاث فقط)</label>
+      <label>البيانات المطلوبة</label>
+      <div class="chips" id="data"></div>
+      <label for="reason">سبب الاطلاع الموثّق</label>
+      <textarea id="reason" placeholder="مثال: متابعة إعطاء الجرعة المسائية حسب الخطة العلاجية"></textarea>
+      <label class="tog"><input type="checkbox" id="mfa" checked> تم التحقق من هوية المستخدم (تحقق ثنائي)</label>
+      <label class="tog"><input type="checkbox" id="log" checked> تسجيل العملية في سجل التدقيق مفعّل</label>
+      <button class="pri" type="submit">تقييم الطلب</button>
+    </form>
+
+    <div class="card" aria-live="polite">
+      <ol class="stages" id="stages"></ol>
+      <div class="verdict v-idle" id="verdict"><h3>بانتظار الطلب</h3><p>ستظهر هنا نتيجة التقييم القانوني ومبرراتها.</p></div>
+      <div class="cmp" id="cmp" hidden>
+        <div><h4>ما يستطيع النظام فتحه (المطلوب)</h4><ul id="asked"></ul></div>
+        <div><h4>ما يحق الاطلاع عليه فعلًا</h4><ul id="granted"></ul></div>
+      </div>
+      <div class="rec" id="rec" hidden></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" id="oversight" style="padding-top:0"><div class="wrap">
+  <h2>لوحة الرقابة والمساءلة</h2>
+  <p class="sub">الطبقة الثالثة: كل قرار يُسجَّل بأسبابه، والحالات المحالة تنتظر مراجعة المختصين بالامتثال وحماية البيانات.</p>
+  <div class="kpis" id="kpis"></div>
+  <div class="card scroll"><table class="stack"><thead><tr><th>رقم القرار</th><th>المستخدم</th><th>المريض</th><th>الغرض</th><th>القرار</th><th>السبب</th></tr></thead><tbody id="logrows"></tbody></table>
+  <div class="empty" id="logempty">لم تُقيَّم أي طلبات بعد.</div></div>
+  <p class="loop">حلقة التحسين: نتائج الرقابة تعود إلى حوكمة القواعد لتحديث السياسة والصلاحيات</p>
+</div></section>
+
+<section class="band" id="framework" style="padding-top:0"><div class="wrap">
+  <h2>إطار الحوكمة القانونية المقترح</h2>
+  <p class="sub" dir="ltr" style="text-align:right">POLICY GOVERNANCE → LEGAL VALIDATION → COMPLIANCE OVERSIGHT</p>
+  <div class="layers">
+    <div class="card"><span class="k">الطبقة الأولى · الأساس</span><h3>حوكمة القواعد</h3><span class="k">المسؤول: المنشأة الصحية عبر جهاتها المختصة</span>
+      <ul><li>وضع سياسة الوصول واعتمادها.</li><li>تحديد الأغراض المشروعة.</li><li>تحديد فئات المستخدمين ونطاق البيانات.</li><li>تنظيم التعامل مع الاستثناءات.</li></ul></div>
+    <div class="card mid"><span class="k">الطبقة الثانية · قلب النموذج</span><h3>التحقق القانوني</h3><span class="k">المسؤول: الجهات المخوّلة بتطبيق السياسة</span>
+      <ul><li><b>المشروعية:</b> أساس نظامي وغرض محدد.</li><li><b>التخويل:</b> صلاحية المستخدم وعلاقته المهنية بالمهمة.</li><li><b>الضرورة والتناسب:</b> البيانات اللازمة فقط.</li><li><b>الضمانات والمساءلة:</b> الحماية والتوثيق والمراجعة.</li></ul></div>
+    <div class="card"><span class="k">الطبقة الثالثة · ضمان الالتزام</span><h3>الرقابة والمساءلة</h3><span class="k">المسؤول: المختصون بالامتثال وحماية البيانات</span>
+      <ul><li>مراجعة الحالات غير الاعتيادية.</li><li>توثيق أسباب القرارات.</li><li>تقييم الاستثناءات.</li><li>مراجعة الصلاحيات عند تغيّر المهام أو التجاوزات.</li></ul></div>
+  </div>
+  <h2 style="margin-top:36px">من يحدد المشروعية؟</h2>
+  <div class="who">
+    <div class="card"><b>المنشأة الصحية بصفتها جهة تحكم</b>تضع قواعد معالجة البيانات وتحدد الصلاحيات والإجراءات وفق الأنظمة.</div>
+    <div class="card"><b>الجهات المخوّلة داخل المنشأة</b>تطبق سياسة الوصول المعتمدة وتتحقق من استيفاء الشروط ضمن حدود التفويض.</div>
+    <div class="card"><b>المختصون بالامتثال وحماية البيانات</b>يساندون التقييم القانوني ويراجعون الحالات غير الواضحة والتجاوزات.</div>
+    <div class="card"><b>النظام التقني</b>ينفذ الصلاحيات المعتمدة ويسجل العمليات، لكنه لا يُنشئ مسوّغًا قانونيًا للاطلاع.</div>
+  </div>
+</div></section>
+
+<section class="band" id="basis" style="padding-top:0"><div class="wrap">
+  <h2>الأساس النظامي السعودي</h2>
+  <p class="sub">المواد التي يستند إليها المحاكي في تعليل قراراته.</p>
+  <div class="card scroll"><table class="stack"><thead><tr><th>النظام</th><th>المادة</th><th>مضمون الحكم</th><th>العلاقة بالإطار</th></tr></thead><tbody id="lawrows"></tbody></table></div>
+  <p class="note">مقترح علمي تعليمي لإطار حوكمة، وليس نظامًا حكوميًا معتمدًا أو حلًا ثبتت فعاليته. يخضع التطبيق الفعلي للأنظمة واللوائح وسياسات المنشأة الصحية.</p>
+</div></section>
+</main>
+
+<footer class="band quote"><p>«لا تُثبت مشروعية الوصول بالمسمى الوظيفي وحده، بل بالأساس النظامي والحاجة المهنية ونطاق البيانات والضوابط القابلة للمساءلة.»</p>
+<p class="en" style="text-align:center;font-size:15px;margin-top:12px">LEGAL ACCESS GOVERNANCE · From Technical Permission to Legal Accountability</p></footer>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const ROLES={doc:'طبيبة',nurse:'ممرضة',lab:'فنية مختبر',pharm:'صيدلانية',bill:'موظفة الفوترة',qa:'مسؤولة الجودة',res:'باحثة',recp:'موظفة الاستقبال'};
+const PATIENTS=['ملف 104-552 · قسم الباطنة','ملف 207-318 · قسم الجراحة','ملف 309-871 · قسم الطوارئ'];
+const DATA={id:'البيانات التعريفية',meds:'الحساسية والأدوية',vit:'العلامات الحيوية',dx:'التشخيصات',lab:'نتائج المختبر',psy:'الملاحظات النفسية',hist:'التاريخ المرضي الكامل'};
+const PURPOSES={care:'تقديم الرعاية العلاجية المباشرة',bill:'إصدار الفواتير والمطالبات',qa:'تدقيق جودة مكلّف به',res:'بحث علمي',edu:'تعليم وتدريب',appt:'التسجيل والمواعيد',pers:'اطمئنان شخصي على قريب أو معرفة'};
+// stage 2: which roles a purpose allows
+const ALLOW={care:['doc','nurse','lab','pharm'],bill:['bill'],qa:['qa'],res:['res'],edu:['doc','nurse'],appt:['recp']};
+// stage 3: data needed per purpose (and role, for care)
+const NEED={care:{doc:['id','meds','vit','dx','lab','psy','hist'],nurse:['id','meds','vit','dx','lab'],lab:['id','lab'],pharm:['id','meds','dx']},bill:['id','dx'],qa:['meds','vit','dx'],res:['dx','lab'],edu:['dx','lab'],appt:['id']};
+const LAW=[['نظام حماية البيانات الشخصية','23','قصر الاطلاع على البيانات الصحية على أقل عدد من العاملين وبالقدر اللازم.','معيارا الضرورة والتخويل.','م23'],
+['نظام حماية البيانات الشخصية','19','التزام جهة التحكم بالتدابير التنظيمية والإدارية والتقنية لحماية البيانات.','طبقة حوكمة القواعد ومعيار الضمانات.','م19'],
+['اللائحة التنفيذية للنظام','26','ضوابط البيانات الصحية، ومنها توزيع الصلاحيات وتوثيق مراحل المعالجة.','توزيع المسؤوليات وطبقة الرقابة.','ل26'],
+['نظام مزاولة المهن الصحية','21','حفظ الممارس الصحي لأسرار مهنته إلا في الحالات المقررة نظامًا.','معيار الضمانات: الاطلاع لا يبيح الإفشاء.','مهن21'],
+['وثيقة حقوق ومسؤوليات المرضى','—','حماية سرية معلومات المريض وقصر الاطلاع على المخوّلين.','معيار التخويل والعلاقة المهنية.','وثيقة']];
+const lawName={'م23':'نظام حماية البيانات الشخصية – م23','م19':'نظام حماية البيانات الشخصية – م19','ل26':'اللائحة التنفيذية – م26','مهن21':'نظام مزاولة المهن الصحية – م21','وثيقة':'وثيقة حقوق ومسؤوليات المرضى'};
+const PRESETS=[
+ {t:'ممرضة الفريق المعالج',role:'nurse',p:0,purpose:'care',rel:1,data:['id','meds','vit'],reason:'متابعة إعطاء الجرعة المسائية حسب الخطة العلاجية',mfa:1,log:1},
+ {t:'الاطمئنان على قريب',role:'nurse',p:1,purpose:'pers',rel:0,data:['dx','lab'],reason:'قريبتي منوّمة وأردت الاطمئنان على نتائجها',mfa:1,log:1},
+ {t:'الفوترة تطلب الملف كاملًا',role:'bill',p:1,purpose:'bill',rel:1,data:['id','dx','lab','psy','hist'],reason:'إصدار مطالبة التأمين لعملية المريض',mfa:1,log:1},
+ {t:'فنية مختبر بطلب نشط',role:'lab',p:2,purpose:'care',rel:1,data:['id','lab'],reason:'إدخال نتيجة تحليل الدم المطلوب من الطوارئ',mfa:1,log:1},
+ {t:'بحث دون موافقة أخلاقيات',role:'res',p:0,purpose:'res',rel:1,data:['dx','lab'],reason:'جمع بيانات لدراسة عن السكري',mfa:1,log:1},
+ {t:'طبيبة دون توثيق سبب',role:'doc',p:2,purpose:'care',rel:1,data:['id','meds','dx','lab'],reason:'',mfa:1,log:1},
+ {t:'طبيبة خارج الفريق',role:'doc',p:0,purpose:'care',rel:0,data:['dx','hist'],reason:'مراجعة الحالة',mfa:1,log:1}];
+const opt=(o,sel)=>Object.entries(o).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+$('role').innerHTML=opt(ROLES);$('purpose').innerHTML=opt(PURPOSES);
+$('patient').innerHTML=PATIENTS.map((p,i)=>`<option value="${i}">${p}</option>`).join('');
+$('data').innerHTML=Object.entries(DATA).map(([k,v])=>`<label class="chip"><input type="checkbox" value="${k}">${v}</label>`).join('');
+$('presets').innerHTML=PRESETS.map((p,i)=>`<button type="button" data-i="${i}">${p.t}</button>`).join('');
+$('lawrows').innerHTML=LAW.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+const STAGES=[['المشروعية','التحقق من الغرض والأساس النظامي'],['التخويل','التحقق من الصلاحية والعلاقة المهنية'],['الضرورة والتناسب','تحديد نطاق البيانات الضرورية'],['الضمانات والمساءلة','استيفاء ضوابط الحماية والتوثيق']];
+const drawStages=(res)=>{$('stages').innerHTML=STAGES.map((s,i)=>{const r=res&&res[i];const cls=r?{pass:'pass',fail:'fail',rev:'rev',skip:'skip'}[r.s]:'';const lab=r?{pass:'مستوفى',fail:'رفض',rev:'مراجعة',skip:'لم يُفحص'}[r.s]:'';
+ return `<li class="st ${cls}"><span class="n">${i+1}</span><div><b>${s[0]}</b><small>${r&&r.m?r.m:s[1]}</small></div>${lab?`<span class="v">${lab}</span>`:''}</li>`}).join('')};
+drawStages();
+const read=()=>({role:$('role').value,p:+$('patient').value,purpose:$('purpose').value,rel:$('rel').checked,ethics:$('ethics').checked,
+ data:[...document.querySelectorAll('#data input:checked')].map(x=>x.value),reason:$('reason').value.trim(),mfa:$('mfa').checked,log:$('log').checked});
+const load=p=>{$('role').value=p.role;$('patient').value=p.p;$('purpose').value=p.purpose;$('rel').checked=!!p.rel;$('ethics').checked=!!p.ethics;
+ document.querySelectorAll('#data input').forEach(x=>x.checked=p.data.includes(x.value));$('reason').value=p.reason;$('mfa').checked=!!p.mfa;$('log').checked=!!p.log};
+function evaluate(q){
+ const out=[],laws=new Set();let scope=[],extra=[],end=null;
+ const stop=(s,m,L)=>{out.push({s,m});(L||[]).forEach(l=>laws.add(l));end=s;};
+ // 1 legitimacy
+ if(q.purpose==='pers')stop('fail','لا يوجد أساس نظامي: الاطلاع لغرض شخصي ليس غرضًا مشروعًا للمعالجة.',['مهن21','وثيقة']);
+ else if(q.purpose==='edu')stop('rev','التعليم غرض محتمل المشروعية، لكنه يحتاج برنامجًا معتمدًا وضوابط إخفاء هوية تحددها المنشأة.',['ل26']);
+ else out.push({s:'pass',m:`غرض محدد ومشروع: ${PURPOSES[q.purpose]}.`});
+ // 2 authorization
+ if(!end){const ok=ALLOW[q.purpose].includes(q.role);
+  if(!ok)stop('fail',`صلاحية «${ROLES[q.role]}» لا تشمل هذا الغرض وفق سياسة الوصول المعتمدة.`,['وثيقة','م23']);
+  else if(!q.rel)stop('fail','لا توجد علاقة مهنية قائمة بهذا المريض ولا تكليف بالمهمة: الصلاحية التقنية وحدها لا تكفي.',['وثيقة','م23']);
+  else if(q.purpose==='res'&&!q.ethics)stop('rev','البحث يتطلب موافقة لجنة أخلاقيات البحث قبل الاطلاع؛ يُحال الطلب للمراجعة.',['ل26']);
+  else out.push({s:'pass',m:`${ROLES[q.role]} مخوّلة ولها علاقة مهنية قائمة بالمهمة.`});}
+ // 3 necessity
+ if(!end){const need=q.purpose==='care'?NEED.care[q.role]:NEED[q.purpose];
+  scope=q.data.filter(d=>need.includes(d));extra=q.data.filter(d=>!need.includes(d));laws.add('م23');
+  if(!q.data.length)stop('rev','لم تُحدَّد البيانات المطلوبة؛ لا يمكن تقدير الضرورة.',['م23']);
+  else if(!scope.length)stop('fail','كل البيانات المطلوبة تتجاوز حاجة المهمة.',['م23']);
+  else out.push({s:'pass',m:extra.length?`طلب زائد: حُذف ${extra.length} من البنود لعدم لزومها، ويُقصر الاطلاع على ${scope.length} بند.`:'البيانات المطلوبة مقصورة على ما تحتاجه المهمة.'});}
+ // 4 safeguards
+ if(!end){laws.add('م19');
+  if(!q.log)stop('fail','تسجيل التدقيق معطّل: لا يمكن ضمان المساءلة، فلا يُنفّذ الوصول.',['م19','ل26']);
+  else if(!q.mfa)stop('rev','لم يكتمل التحقق من هوية المستخدم؛ يُعلّق الطلب حتى استيفائه.',['م19']);
+  else if(q.reason.length<8)stop('rev','سبب الاطلاع غير موثّق بما يكفي لقبول المراجعة اللاحقة.',['ل26']);
+  else {out.push({s:'pass',m:'الهوية متحقق منها، والسجل مفعّل، والسبب موثّق.'});laws.add('ل26');laws.add('مهن21');}}
+ while(out.length<4)out.push({s:'skip'});
+ return {out,end:end||'pass',scope,extra,laws:[...laws]};
+}
+const LOG=[];let seq=1,timer=null;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function render(q,r){
+ const firstBad=r.out.find(x=>x.s==='fail'||x.s==='rev');
+ const V={pass:['v-ok','وصول مشروع مشروط','اجتاز الطلب المراحل الأربع؛ يُفتح الاطلاع على النطاق المحدد فقط، ويُسجَّل للمراجعة.'],
+  fail:['v-no','رفض مسبّب','تخلّف شرط من شروط المشروعية؛ يُرفض الطلب مع توثيق السبب.'],
+  rev:['v-rv','إحالة للمراجعة','نقص في المعلومات أو تعارض؛ يُحال الطلب للمختصين بالامتثال وحماية البيانات قبل أي اطلاع.']}[r.end];
+ $('verdict').className='verdict '+V[0];$('verdict').innerHTML=`<h3>${V[1]}</h3><p>${firstBad?firstBad.m:V[2]}</p>`;
+ $('cmp').hidden=false;
+ $('asked').innerHTML=q.data.length?q.data.map(d=>`<li>${DATA[d]}</li>`).join(''):'<li>لا شيء</li>';
+ $('granted').innerHTML=r.end==='pass'?Object.keys(DATA).map(d=>r.scope.includes(d)?`<li class="g">${DATA[d]}</li>`:(q.data.includes(d)?`<li class="x">${DATA[d]}</li>`:'')).join(''):'<li class="x">لا يُفتح أي جزء من الملف</li>';
+ const id=`LAG-1448-${String(seq++).padStart(4,'0')}`;const now=new Date().toLocaleString('ar-SA-u-nu-latn',{dateStyle:'short',timeStyle:'short'});
+ const rec={id,now,user:ROLES[q.role],pat:PATIENTS[q.p],pur:PURPOSES[q.purpose],dec:V[1],why:firstBad?firstBad.m:'استيفاء المراحل الأربع',scope:r.end==='pass'?r.scope.map(d=>DATA[d]).join('، '):'—',reason:q.reason||'غير موثّق'};
+ $('rec').hidden=false;
+ $('rec').innerHTML=`<div class="rechead"><b>سجل القرار الموثّق · ${id}</b><button type="button" id="copy">نسخ السجل</button></div>
+ <dl><dt>التاريخ</dt><dd>${now}</dd><dt>المستخدم</dt><dd>${rec.user}</dd><dt>المريض</dt><dd>${rec.pat}</dd><dt>الغرض</dt><dd>${rec.pur}</dd><dt>السبب المعلن</dt><dd>${rec.reason}</dd><dt>النطاق المعتمد</dt><dd>${rec.scope}</dd><dt>القرار</dt><dd><b>${rec.dec}</b> — ${rec.why}</dd></dl>
+ <div class="law">${r.laws.map(l=>`<span>${lawName[l]}</span>`).join('')}</div>`;
+ $('copy').onclick=async e=>{const t=`${id}\n${now}\nالمستخدم: ${rec.user}\nالمريض: ${rec.pat}\nالغرض: ${rec.pur}\nالسبب: ${rec.reason}\nالنطاق: ${rec.scope}\nالقرار: ${rec.dec} — ${rec.why}`;
+  try{await navigator.clipboard.writeText(t);e.target.textContent='تم النسخ'}catch(_){e.target.textContent='تعذّر النسخ'}};
+ LOG.unshift({...rec,end:r.end});drawLog();
+}
+function drawLog(){
+ const c={pass:0,fail:0,rev:0};LOG.forEach(l=>c[l.end]++);
+ $('kpis').innerHTML=`<div><b>${LOG.length}</b>طلبات مقيّمة</div><div style="color:var(--ok)"><b>${c.pass}</b>وصول مشروع</div><div style="color:var(--no)"><b>${c.fail}</b>رفض مسبّب</div><div style="color:var(--rv)"><b>${c.rev}</b>بانتظار المراجعة</div>`;
+ $('logempty').hidden=LOG.length>0;
+ const col={pass:'#1F7A4D',fail:'#9B2335',rev:'#A86A12'};
+ $('logrows').innerHTML=LOG.map(l=>`<tr><td>${l.id}</td><td>${l.user}</td><td>${l.pat}</td><td>${l.pur}</td><td><span class="pill" style="background:${col[l.end]}">${l.dec}</span></td><td>${l.why}</td></tr>`).join('');
+}
+drawLog();
+const idle=()=>{clearInterval(timer);drawStages();$('verdict').className='verdict v-idle';$('verdict').innerHTML='<h3>بانتظار التقييم</h3><p>راجع بيانات الطلب، ثم اضغط «تقييم الطلب» لتظهر النتيجة.</p>';$('cmp').hidden=true;$('rec').hidden=true};
+$('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#presets button').forEach(x=>x.classList.toggle('on',x===b));load(PRESETS[+b.dataset.i]);idle()});
+$('req').addEventListener('input',idle);$('req').addEventListener('change',idle);
+$('req').addEventListener('submit',e=>{e.preventDefault();const q=read(),r=evaluate(q);clearInterval(timer);
+ if(reduce){drawStages(r.out);render(q,r);return}
+ let k=0;drawStages([]);$('verdict').className='verdict v-idle';$('verdict').innerHTML='<h3>جارٍ التحقق…</h3><p>يمر الطلب بالمراحل بالتسلسل.</p>';
+ timer=setInterval(()=>{k++;drawStages(r.out.slice(0,k));if(k>=4){clearInterval(timer);render(q,r)}},420)});
+load(PRESETS[0]);document.querySelector('#presets button').classList.add('on');
+}
+</script>
+</body>
+</html>

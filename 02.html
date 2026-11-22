@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>شارك المعلومة… وحافظ على أمانها</title>
+<style>
+/* VOICE: clinical-legal, calm and exact — a hospital records console that reasons out loud.
+   IDEA: an access-request slip passing through four legal checkpoints, stamped at the end.
+   PICTURE: the live four-stage pipeline with the gap between "what the system can open" and "what is lawful".
+   COLOUR and TYPE: the solution's own deep purple + lavender; green / crimson / amber only for verdicts. Abd ElRady.
+   LAYOUT: purple header band → simulator (request | verdict) → decision log → framework → legal basis → closing line. */
+@font-face{font-family:'AbdElRady';src:url('abd-regular.otf') format('opentype');font-weight:400}
+@font-face{font-family:'AbdElRady';src:url('abd-bold.otf') format('opentype');font-weight:700}
+:root{color-scheme:light dark;
+--bg:light-dark(#F6F3FA,#17121F);--card:light-dark(#FFFFFF,#221B2D);--ink:light-dark(#241735,#EEE8F6);--mute:light-dark(#6B5D80,#B3A6C6);
+--line:light-dark(#E3DAEE,#3A2F4A);--pu:#4A2A6E;--pu2:light-dark(#4A2A6E,#B79BE0);--lav:light-dark(#E9E0F5,#33284A);
+--ok:light-dark(#1F7A4D,#4CC38A);--okb:light-dark(#E3F3EA,#173528);--no:light-dark(#9B2335,#F0798A);--nob:light-dark(#F8E4E7,#3A1A21);
+--rv:light-dark(#A86A12,#E8B15A);--rvb:light-dark(#FBF0DD,#3A2C14)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 'AbdElRady',system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(24px,4vw,56px) max(5vw,16px)}.wrap{max-width:1240px;margin:0 auto}
+header{background:#4A2A6E;color:#fff;border-bottom:6px solid #B79BE0}
+.top{display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
+.logos{display:flex;gap:18px;align-items:center}.logos img{height:64px;width:auto}.logos i{width:1px;height:52px;background:#ffffff55}
+.tag{display:inline-block;border:1px solid #ffffff66;border-radius:99px;padding:2px 14px;font-size:14px}
+h1{font-size:clamp(32px,5vw,52px);line-height:1.1;margin:10px 0 4px;text-wrap:balance}
+.en{direction:ltr;text-align:right;font-size:14px;opacity:.8;margin:0}
+.lead{max-width:62ch;margin:18px 0 0;font-size:17px;opacity:.95}
+.gapbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;margin-top:22px;max-width:720px}
+.gapbar div{background:#ffffff1a;border:1px solid #ffffff40;border-radius:12px;padding:10px 14px;font-size:15px}.gapbar b{display:block;font-size:17px}
+.gapbar span{font-size:13px;text-align:center;opacity:.85}
+h2{font-size:clamp(24px,3vw,32px);line-height:1.15;margin:0 0 6px}.sub{color:var(--mute);margin:0 0 20px}
+.sim{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:22px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+label{display:block;font-weight:700;font-size:15px;margin:14px 0 6px}
+select,textarea{width:100%;font:16px 'AbdElRady',system-ui;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+textarea{min-height:64px;resize:vertical}
+select:focus,textarea:focus,button:focus-visible,input:focus-visible{outline:3px solid #B79BE0;outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{margin:0;display:flex;font-weight:400;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px;background:var(--bg)}
+.chip input{accent-color:#4A2A6E;width:18px;height:18px}
+.tog{display:flex;align-items:center;gap:10px;font-weight:400;margin:8px 0;cursor:pointer}.tog input{accent-color:#4A2A6E;width:20px;height:20px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.presets button{flex:none}
+button{font:700 15px 'AbdElRady',system-ui;border-radius:12px;min-height:44px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+button.pri{background:#4A2A6E;border-color:#4A2A6E;color:#fff;width:100%;font-size:18px;margin-top:18px}
+button.on{background:var(--lav);border-color:var(--pu2)}
+.stages{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.st{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--bg);transition:background .3s,border-color .3s}
+.st .n{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--lav);color:var(--pu2)}
+.st b{display:block}.st small{color:var(--mute);font-size:14px;display:block}
+.st .v{font-weight:700;font-size:14px;border-radius:99px;padding:3px 12px;white-space:nowrap}
+.st.pass{border-color:var(--ok);background:var(--okb)}.st.pass .v{background:var(--ok);color:#fff}
+.st.fail{border-color:var(--no);background:var(--nob)}.st.fail .v{background:var(--no);color:#fff}
+.st.rev{border-color:var(--rv);background:var(--rvb)}.st.rev .v{background:var(--rv);color:#fff}
+.st.skip{opacity:.5}
+.verdict{margin-top:16px;border-radius:16px;padding:18px 20px;color:#fff}
+.verdict h3{margin:0;font-size:clamp(24px,3vw,30px);line-height:1.2}.verdict p{margin:6px 0 0}
+.v-ok{background:#1F7A4D}.v-no{background:#9B2335}.v-rv{background:#A86A12}.v-idle{background:var(--lav);color:var(--ink)}
+.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:16px}
+.cmp h4{margin:0 0 8px;font-size:15px}.cmp ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.cmp li{border-radius:8px;padding:5px 10px;font-size:14px;background:var(--bg);border:1px solid var(--line)}
+.cmp li.g{background:var(--okb);border-color:var(--ok)}.cmp li.x{background:var(--nob);border-color:var(--no);color:var(--no)}
+.rec{margin-top:16px;border:1px dashed var(--pu2);border-radius:14px;padding:14px 16px;font-size:14px}
+.rec dl{display:grid;grid-template-columns:9em minmax(0,1fr);gap:4px 12px;margin:8px 0 0}.rec dt{color:var(--mute)}.rec dd{margin:0}
+.rechead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.law{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.law span{background:var(--lav);color:var(--pu2);border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:right;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#4A2A6E;color:#fff;font-weight:700}.scroll{overflow-x:auto}
+.pill{border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap}
+.kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px}.kpis div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 16px}.kpis b{font-size:26px;display:block;line-height:1.2}
+.layers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.layers .card h3{margin:0;font-size:21px}.layers .card .k{color:var(--mute);font-size:13px}
+.layers .mid{background:#4A2A6E;color:#fff;border-color:#4A2A6E}.layers .mid .k{color:#D9C8F0}
+.layers ul{margin:10px 0 0;padding-inline-start:18px}
+.loop{margin-top:12px;border-top:2px dashed var(--pu2);padding-top:10px;color:var(--pu2);font-weight:700;text-align:center}
+.who{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}.who .card b{display:block;margin-bottom:4px}
+.quote{background:#4A2A6E;color:#fff;text-align:center}.quote p{font-size:clamp(20px,2.6vw,28px);font-weight:700;max-width:900px;margin:0 auto;line-height:1.5}
+.note{font-size:13px;color:var(--mute);margin-top:12px}
+.empty{color:var(--mute);text-align:center;padding:18px}
+@media(max-width:900px){.sim,.layers{grid-template-columns:minmax(0,1fr)}.who{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.cmp,.who{grid-template-columns:minmax(0,1fr)}.rec dl{grid-template-columns:7em minmax(0,1fr)}.logos img{height:48px}
+table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:7.5em}.stack td::before{content:attr(data-l);float:inline-start;width:7em;margin-inline-start:-7.5em;color:var(--mute)}.stack td:empty{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+<style>
+.cls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.cls div{border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:14px;background:var(--bg);transition:background .3s}
+.cls b{display:block;font-size:15px}.cls div.on{background:#4A2A6E;color:#fff;border-color:#4A2A6E}
+.intl{border:1px dashed var(--line);border-radius:12px;padding:8px 12px;font-size:14px;margin-bottom:12px}.intl.on{border-color:var(--rv);background:var(--rvb)}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:16px}
+.duo div{border-radius:14px;padding:12px 14px;border:1px solid var(--line);background:var(--bg)}
+.duo b{display:block;font-size:17px}.duo .y{border-color:var(--ok);background:var(--okb)}.duo .y b{color:var(--ok)}.duo .n{border-color:var(--no);background:var(--nob)}.duo .n b{color:var(--no)}
+.fix{margin-top:12px;background:var(--rv);border-color:var(--rv);color:#fff}
+@media(max-width:600px){.cls,.duo{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <div class="top">
+    <div><a href="index.html" style="color:#fff;display:inline-block;margin-bottom:10px;font-size:15px">→ جميع التحديات</a><br><span class="tag">SECURE CARE HACKATHON · المسار القانوني | التحدي 02</span>
+      <h1>شارك المعلومة… وحافظ على أمانها</h1>
+      <p class="en">LEGAL DISCLOSURE GOVERNANCE · FROM SECURE TRANSFER TO LAWFUL DISCLOSURE</p></div>
+    <div class="logos"><img src="kku.png" alt="جامعة الملك خالد – عمادة شؤون الطلاب"><i></i><img src="club.png" alt="نادي الكلية التطبيقية بمحايل"></div>
+  </div>
+  <p class="lead">محاكاة لإطار حوكمة الإفصاح عن البيانات الصحية (LDGF): قدّم طلب مشاركة بيانات مريض مع جهة أخرى، وتابع كيف يُصنَّف الطلب قانونيًا ويُتحقق من مسوّغه وحدوده قبل أي إرسال.</p>
+  <div class="gapbar" aria-label="الفجوة القانونية">
+    <div><b>أمان الإرسال وهوية المستلم</b>ما تضمنه الوسائل التقنية</div>
+    <span>الفجوة</span>
+    <div><b>مشروعية الإفصاح</b>ما يثبته التحليل القانوني</div>
+  </div>
+</div></header>
+
+<main>
+<section class="band" id="simulator"><div class="wrap">
+  <h2>محاكي طلب مشاركة البيانات</h2>
+  <p class="sub">اختر سيناريو جاهزًا لتعبئة الطلب أو عدّله بنفسك، ثم اضغط «تقييم الطلب». جميع الجهات والملفات افتراضية.</p>
+  <div class="sim">
+    <form class="card" id="req">
+      <div class="presets" id="presets" aria-label="سيناريوهات جاهزة"></div>
+      <label for="recip">الجهة المستلمة</label>
+      <select id="recip"></select>
+      <label for="loc">موقع الجهة المستلمة</label>
+      <select id="loc"><option value="in">داخل المملكة</option><option value="out">خارج المملكة</option></select>
+      <label class="tog"><input type="checkbox" id="adequate"> تتوفر ضمانات نقل دولي ومستوى حماية مناسب (للنقل خارج المملكة)</label>
+      <label for="basis">المسوّغ النظامي المستند إليه</label>
+      <select id="basis"></select>
+      <label class="tog"><input type="checkbox" id="written"> الموافقة أو الأمر موثّق كتابيًا ومرفق بالطلب</label>
+      <label for="purpose">الغرض المحدد من المشاركة</label>
+      <select id="purpose"></select>
+      <label>البيانات المطلوب مشاركتها</label>
+      <div class="chips" id="data"></div>
+      <label class="tog"><input type="checkbox" id="enc" checked> قناة إرسال آمنة ومشفّرة</label>
+      <label class="tog"><input type="checkbox" id="ver" checked> تم التحقق من هوية المستلم وصفته وتخويله</label>
+      <label for="appr">معتمِد الإفصاح</label>
+      <select id="appr"><option value="ok">مسؤول الإفصاح المفوَّض</option><option value="no">موظف بالوحدة دون تفويض بالإفصاح</option></select>
+      <button class="pri" type="submit">تقييم الطلب</button>
+    </form>
+
+    <div class="card" aria-live="polite">
+      <div class="cls" id="cls"></div>
+      <div class="intl" id="intl">مسار إضافي: اختبار النقل الدولي — لا ينطبق</div>
+      <ol class="stages" id="stages"></ol>
+      <div class="verdict v-idle" id="verdict"><h3>بانتظار التقييم</h3><p>اضغط «تقييم الطلب» لتظهر النتيجة ومبرراتها.</p></div>
+      <div class="duo" id="duo" hidden></div>
+      <div class="cmp" id="cmp" hidden>
+        <div><h4>البيانات المطلوبة</h4><ul id="asked"></ul></div>
+        <div><h4>البيانات المسموح بمشاركتها</h4><ul id="granted"></ul></div>
+      </div>
+      <div id="fixwrap"></div>
+      <div class="rec" id="rec" hidden></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <h2>سجل الإفصاحات والمراجعة</h2>
+  <p class="sub">الطبقة الرابعة: يُوثَّق المسوّغ والغرض والمستلم ونطاق البيانات وقرار الاعتماد، وتُحال الحالات غير الواضحة قبل التنفيذ.</p>
+  <div class="kpis" id="kpis"></div>
+  <div class="card scroll"><table class="stack"><thead><tr><th>رقم القرار</th><th>المستلم</th><th>تصنيف العلاقة</th><th>المسوّغ</th><th>القرار</th><th>السبب</th></tr></thead><tbody id="logrows"></tbody></table>
+  <div class="empty" id="logempty">لم تُقيَّم أي طلبات بعد.</div></div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <h2>إطار حوكمة الإفصاح</h2>
+  <p class="sub" dir="ltr" style="text-align:right">LEGAL DISCLOSURE GOVERNANCE FRAMEWORK – LDGF</p>
+  <div class="layers" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+    <div class="card mid"><span class="k">الطبقة الأولى · الابتكار</span><h3>التصنيف القانوني للعلاقة</h3><span class="k">LEGAL RELATIONSHIP CLASSIFICATION</span>
+      <ul><li><b>وصول داخلي:</b> داخل جهة التحكم نفسها.</li><li><b>معالجة بواسطة جهة معالجة:</b> تعالج البيانات نيابةً عن جهة التحكم ولحسابها.</li><li><b>إفصاح لطرف مستقل:</b> تمكين غير جهة التحكم أو جهة المعالجة من البيانات.</li><li><b>مسار إضافي:</b> اختبار النقل الدولي عند نقل البيانات خارج المملكة.</li></ul></div>
+    <div class="card"><span class="k">الطبقة الثانية</span><h3>التحقق من المسوّغ النظامي</h3><span class="k">LEGAL BASIS VALIDATION</span>
+      <ul><li>تحديد الأساس النظامي وشروط انطباقه: المادة 15 في الإفصاح، وأحكام السر المهني عند إفصاح الممارس الصحي.</li><li>لا تُفترض الموافقة دائمًا، ولا تكفي مصلحة الجهة المستلمة لتبرير الإفصاح عن بيانات صحية حساسة.</li></ul></div>
+    <div class="card"><span class="k">الطبقة الثالثة</span><h3>الضرورة والتناسب والضمانات</h3><span class="k">NECESSITY &amp; SAFEGUARDS</span>
+      <ul><li>الغرض المحدد من المشاركة.</li><li>ضرورة البيانات والحد الأدنى منها.</li><li>هوية المستلم وصفته وتخويله.</li><li>السرية والحماية وأمن النقل.</li><li>الاشتراطات القطاعية أو الدولية عند انطباقها.</li></ul></div>
+    <div class="card"><span class="k">الطبقة الرابعة</span><h3>الاعتماد والمساءلة</h3><span class="k">AUTHORIZATION &amp; ACCOUNTABILITY</span>
+      <ul><li>توثيق المسوّغ والغرض والمستلم ونطاق البيانات وقرار الاعتماد.</li><li>إحالة الحالات غير الواضحة إلى المختصين قبل التنفيذ.</li><li>مراجعة الاستثناءات والعمليات غير الاعتيادية.</li></ul></div>
+  </div>
+  <p class="loop">تصنيف العلاقة لا يثبت المشروعية بذاته؛ ويجب التحقق من المسوّغ النظامي والضوابط الخاصة بكل عملية.</p>
+  <h2 style="margin-top:36px">من يحدد مشروعية الإفصاح؟</h2>
+  <div class="who">
+    <div class="card"><b>جهة التحكم</b>مسؤولة عن الالتزام بالأحكام النظامية ووضع سياسة المشاركة.</div>
+    <div class="card"><b>المختصون القانونيون وحماية البيانات</b>يقيّمون المسوّغات والاستثناءات وفق اختصاصاتهم.</div>
+    <div class="card"><b>الجهة المخوّلة بالتنفيذ</b>تتحقق من استيفاء الشروط وتنفذ الإجراء ضمن التفويض.</div>
+    <div class="card"><b>المراجعة والامتثال</b>تراجع الالتزام والتجاوزات وتوصي بالإجراءات التصحيحية.</div>
+  </div>
+  <p class="note">نظم المعلومات والأمن السيبراني: تطبق الحماية وتسجل العمليات، دون أن تنشئ مسوّغًا قانونيًا. توزيع تنظيمي مقترح، وليس لجنة إلزامية تفرضها الأنظمة على كل منشأة.</p>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <h2>الأساس النظامي السعودي</h2>
+  <p class="sub">المواد التي يستند إليها المحاكي في تعليل قراراته.</p>
+  <div class="card scroll"><table class="stack"><thead><tr><th>المصدر الرسمي</th><th>المتطلب النظامي</th><th>أثره على الحل</th></tr></thead><tbody id="lawrows"></tbody></table></div>
+  <p class="note">مقترح علمي تعليمي لإطار حوكمة، وليس نظامًا حكوميًا معتمدًا أو حلًا ثبتت فعاليته. يخضع التطبيق الفعلي للأنظمة واللوائح وسياسات المنشأة الصحية.</p>
+</div></section>
+</main>
+
+<footer class="band quote"><p>«أمان نقل البيانات لا يثبت وحده مشروعية الإفصاح؛ فالمشروعية تبدأ من المسوّغ النظامي وتنتهي بضوابط الحماية والمساءلة.»</p>
+<p class="en" style="text-align:center;font-size:15px;margin-top:12px">LEGAL DISCLOSURE GOVERNANCE · From Secure Transfer to Lawful Disclosure</p></footer>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const CLS={int:['وصول داخلي','داخل جهة التحكم نفسها'],proc:['معالجة بواسطة جهة معالجة','تعالج البيانات نيابةً عن جهة التحكم'],ext:['إفصاح لطرف مستقل','تمكين جهة مستقلة من البيانات']};
+const RECIP={ward:['قسم الأشعة داخل المستشفى نفسه','int'],lab:['مختبر مرجعي متعاقد يحلل العينات نيابةً عن المستشفى','proc'],cloud:['شركة تقنية تستضيف نظام الملف الصحي','proc'],hosp:['مستشفى آخر يُحال إليه المريض','ext'],ins:['شركة التأمين الصحي','ext'],emp:['جهة عمل المريض','ext'],court:['جهة قضائية مختصة','ext'],unk:['جهة لم تتضح صفتها (طلب بالبريد الإلكتروني)','?']};
+const BASIS={care:'استمرار الرعاية العلاجية للمريض',consent:'موافقة المريض',court:'أمر قضائي',contract:'عقد معالجة مع جهة التحكم',legal:'التزام نظامي أو طلب جهة رسمية مختصة',interest:'المصلحة المشروعة للجهة الطالبة',none:'لم يُحدَّد مسوّغ'};
+const PURP={cont:['استكمال علاج المريض',['id','meds','dx','lab','img']],analysis:['تحليل العينات وإصدار النتائج',['id','lab']],host:['استضافة النظام وتشغيله',['id','meds','dx','lab','img','psy']],claim:['صرف مطالبة التأمين',['id','dx']],fit:['تقييم اللياقة الوظيفية',['dx']],case:['النظر في قضية منظورة',['id','dx','img']],na:['غير محدد',[]]};
+const DATA={id:'البيانات التعريفية',meds:'الأدوية والحساسية',dx:'التشخيصات',lab:'نتائج المختبر',img:'تقارير الأشعة',psy:'الملاحظات النفسية'};
+const LAW=[['نظام حماية البيانات الشخصية – م1','الإفصاح: تمكين غير جهة التحكم أو جهة المعالجة من البيانات؛ وجهة المعالجة تعمل نيابةً عنها.','أساس التمييز بين فئات الطبقة الأولى.'],
+['نظام حماية البيانات الشخصية – م15','لا إفصاح إلا في حالات محددة؛ والمصلحة المشروعة لا تسوّغه للبيانات الحساسة.','تسمية الحالة المسوِّغة.'],
+['نظام حماية البيانات الشخصية – م19','تدابير تنظيمية وإدارية وتقنية لحماية البيانات، ومنها عند نقلها.','الضمانات وأمن النقل.'],
+['اللائحة التنفيذية – م20','غرض محدد وحدّ أدنى للإفصاح، وتسجيله بتاريخه وطريقته وغرضه.','الحد الأدنى والتوثيق.'],
+['نظام مزاولة المهن الصحية – م21','لا يُفشى السر المهني إلا في حالات محددة، منها موافقة صاحبه كتابةً أو أمر قضائي.','عند إفصاح الممارس الصحي.'],
+['نظام حماية البيانات الشخصية – م29 ولائحة نقل البيانات خارج المملكة','النقل لأغراض محددة وبشروط، منها مستوى حماية مناسب والحد الأدنى، مع استثناءات منصوصة.','اختبار النقل الدولي.']];
+const PRESETS=[
+ {t:'إحالة مريض لمستشفى آخر',recip:'hosp',loc:'in',adequate:0,basis:'care',written:1,purpose:'cont',data:['id','meds','dx','lab'],enc:1,ver:1,appr:'ok'},
+ {t:'التأمين بالمصلحة المشروعة',recip:'ins',loc:'in',adequate:0,basis:'interest',written:0,purpose:'claim',data:['id','dx'],enc:1,ver:1,appr:'ok'},
+ {t:'جهة العمل بموافقة شفهية',recip:'emp',loc:'in',adequate:0,basis:'consent',written:0,purpose:'fit',data:['dx'],enc:1,ver:1,appr:'ok'},
+ {t:'مختبر متعاقد يطلب الملف كاملًا',recip:'lab',loc:'in',adequate:0,basis:'contract',written:1,purpose:'analysis',data:['id','lab','dx','psy'],enc:1,ver:1,appr:'ok'},
+ {t:'استضافة سحابية خارج المملكة',recip:'cloud',loc:'out',adequate:0,basis:'contract',written:1,purpose:'host',data:['id','meds','dx','lab'],enc:1,ver:1,appr:'ok'},
+ {t:'أمر قضائي عبر بريد غير مشفّر',recip:'court',loc:'in',adequate:0,basis:'court',written:1,purpose:'case',data:['dx','img'],enc:0,ver:1,appr:'ok'},
+ {t:'جهة مجهولة الصفة',recip:'unk',loc:'in',adequate:0,basis:'consent',written:1,purpose:'cont',data:['id','dx'],enc:1,ver:0,appr:'ok'}];
+const opt=o=>Object.entries(o).map(([k,v])=>`<option value="${k}">${Array.isArray(v)?v[0]:v}</option>`).join('');
+$('recip').innerHTML=opt(RECIP);$('basis').innerHTML=opt(BASIS);$('purpose').innerHTML=opt(PURP);
+$('data').innerHTML=Object.entries(DATA).map(([k,v])=>`<label class="chip"><input type="checkbox" value="${k}">${v}</label>`).join('');
+$('presets').innerHTML=PRESETS.map((p,i)=>`<button type="button" data-i="${i}">${p.t}</button>`).join('');
+$('lawrows').innerHTML=LAW.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+const STAGES=[['التصنيف القانوني والنقل الدولي','تصنيف العلاقة القانونية واختبار النقل الدولي'],['المسوّغ النظامي','تحديد المسوّغ النظامي وشروطه'],['الضرورة والحد الأدنى','التحقق من الغرض وحدود البيانات'],['المستلم والضمانات','التحقق من صفة المستلم وأمن النقل'],['التوثيق والاعتماد','الاعتماد وفق الصلاحيات المفوّضة']];
+const drawStages=res=>{$('stages').innerHTML=STAGES.map((s,i)=>{const r=res&&res[i];const cls=r?r.s:'';const lab=r?{pass:'مستوفى',fail:'منع',rev:'مراجعة',skip:'لم يُفحص'}[r.s]:'';
+ return `<li class="st ${cls}"><span class="n">${i+1}</span><div><b>${s[0]}</b><small>${r&&r.m?r.m:s[1]}</small></div>${lab?`<span class="v">${lab}</span>`:''}</li>`}).join('')};
+const drawCls=(c,intl)=>{$('cls').innerHTML=Object.entries(CLS).map(([k,v])=>`<div class="${k===c?'on':''}"><b>${v[0]}</b>${v[1]}</div>`).join('');
+ $('intl').className='intl'+(intl?' on':'');$('intl').textContent=intl?'مسار إضافي: اختبار النقل الدولي — ينطبق (البيانات ستنقل خارج المملكة)':'مسار إضافي: اختبار النقل الدولي — لا ينطبق'};
+const read=()=>({recip:$('recip').value,loc:$('loc').value,adequate:$('adequate').checked,basis:$('basis').value,written:$('written').checked,purpose:$('purpose').value,
+ data:[...document.querySelectorAll('#data input:checked')].map(x=>x.value),enc:$('enc').checked,ver:$('ver').checked,appr:$('appr').value});
+const load=p=>{for(const k of ['recip','loc','basis','purpose','appr'])$(k).value=p[k];for(const k of ['adequate','written','enc','ver'])$(k).checked=!!p[k];
+ document.querySelectorAll('#data input').forEach(x=>x.checked=p.data.includes(x.value))};
+function evaluate(q){
+ const out=[],laws=new Set(['م1']);let end=null,scope=[],extra=[];const cls=RECIP[q.recip][1];
+ const stop=(s,m,L)=>{out.push({s,m});(L||[]).forEach(l=>laws.add(l));end=s};
+ // 1 classification + international
+ if(cls==='?')stop('rev','صفة الجهة المستلمة غير واضحة، فلا يمكن تصنيف العلاقة: داخلية أم معالجة أم إفصاح؟',['م1']);
+ else if(q.loc==='out'&&!q.adequate)stop('rev',`${CLS[cls][0]} مع نقل خارج المملكة دون ضمانات حماية مناسبة؛ يُحال لاختبار النقل الدولي.`,['م29']);
+ else out.push({s:'pass',m:`التصنيف: ${CLS[cls][0]}${q.loc==='out'?' — واستُوفي اختبار النقل الدولي':''}.`});
+ if(q.loc==='out')laws.add('م29');
+ // 2 legal basis
+ if(!end){const b=q.basis;
+  if(b==='none')stop('fail','غياب المسوّغ النظامي: لا يجوز الإفصاح دون حالة نظامية محددة.',['م15']);
+  else if(b==='interest')stop('fail','مصلحة الجهة المستلمة لا تكفي لتسويغ الإفصاح عن بيانات صحية حساسة.',['م15']);
+  else if(cls==='int'&&!['care','consent'].includes(b))stop('rev','الوصول الداخلي يستند إلى سياسة الوصول وغرض الرعاية؛ المسوّغ المختار لا يتسق مع التصنيف.',['م15']);
+  else if(cls==='proc'&&b!=='contract')stop('rev','جهة المعالجة تعمل نيابةً عن جهة التحكم بموجب عقد معالجة؛ المسوّغ المختار متعارض مع التصنيف.',['م1']);
+  else if(cls==='ext'&&b==='contract')stop('rev','عقد المعالجة لا يسوّغ الإفصاح لطرف مستقل؛ تعارض في المعلومات.',['م15']);
+  else if(cls==='ext'&&b==='care'&&q.recip!=='hosp')stop('rev','استمرار الرعاية مسوّغ للجهات العلاجية فقط؛ لا يتسق مع صفة هذا المستلم.',['م15']);
+  else if((b==='consent'||b==='court')&&!q.written)stop('rev','لا تُفترض الموافقة: يلزم توثيقها كتابيًا (أو إرفاق الأمر) قبل الإفصاح.',['م21','م15']);
+  else out.push({s:'pass',m:`المسوّغ: ${BASIS[b]}، وشروطه مستوفاة.`});
+  laws.add('م15');if(['consent','court'].includes(b))laws.add('م21');}
+ // 3 necessity
+ if(!end){const need=PURP[q.purpose][1];
+  if(q.purpose==='na')stop('fail','الغرض غير محدد: لا إفصاح دون غرض محدد.',['ل20']);
+  else{scope=q.data.filter(d=>need.includes(d));extra=q.data.filter(d=>!need.includes(d));
+   if(!scope.length)stop('fail','البيانات المطلوبة لا علاقة لها بالغرض المحدد.',['ل20']);
+   else if(extra.length)stop('rev',`طلب يتجاوز الحد الأدنى: ${extra.map(d=>DATA[d]).join('، ')} لا تلزم للغرض؛ تُقلَّص البيانات ويُعاد التقييم.`,['ل20']);
+   else out.push({s:'pass',m:`الغرض محدد (${PURP[q.purpose][0]}) والبيانات في حدها الأدنى.`});}
+  laws.add('ل20');}
+ // 4 recipient & safeguards
+ if(!end){laws.add('م19');
+  if(!q.enc)stop('fail','ضمانات غير مستوفاة: قناة الإرسال غير آمنة، فيُمنع التنفيذ رغم مشروعية المسوّغ.',['م19']);
+  else if(!q.ver)stop('rev','صفة المستلم أو تخويله غير مؤكدة؛ يُعلّق الإفصاح حتى التحقق.',['م19']);
+  else out.push({s:'pass',m:'هوية المستلم وصفته مؤكدة، والإرسال عبر قناة مشفّرة.'});}
+ // 5 authorization
+ if(!end){if(q.appr!=='ok')stop('rev','المعتمِد خارج حدود التفويض؛ يُحال الاعتماد للجهة المخوّلة.',['ل20']);
+  else out.push({s:'pass',m:'اعتُمد الإفصاح من الجهة المفوّضة ووُثّق.'});}
+ while(out.length<5)out.push({s:'skip'});
+ return {out,end:end||'pass',cls,scope,extra,laws:[...laws]};
+}
+const lawName={'م1':'نظام حماية البيانات – م1','م15':'نظام حماية البيانات – م15','م19':'نظام حماية البيانات – م19','ل20':'اللائحة التنفيذية – م20','م21':'نظام مزاولة المهن الصحية – م21','م29':'نظام حماية البيانات – م29 ولائحة النقل'};
+const LOG=[];let seq=1,timer=null;const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function render(q,r){
+ const bad=r.out.find(x=>x.s==='fail'||x.s==='rev');
+ const V={pass:['v-ok','مشاركة مشروطة','استُوفيت الشروط الخمسة؛ تُشارك البيانات في حدها الأدنى مع المستلم المحدد، ويُسجَّل الإفصاح.'],fail:['v-no','منع مسبّب',''],rev:['v-rv','إحالة للمراجعة','']}[r.end];
+ $('verdict').className='verdict '+V[0];$('verdict').innerHTML=`<h3>${V[1]}</h3><p>${bad?bad.m:V[2]}</p>`;
+ const tech=q.enc&&q.ver, legal=r.end==='pass';
+ $('duo').hidden=false;$('duo').innerHTML=`<div class="${tech?'y':'n'}"><small>الأمان التقني</small><b>${tech?'الإرسال آمن والمستلم متحقق منه':'الأمان التقني غير مكتمل'}</b></div><div class="${legal?'y':'n'}"><small>المشروعية القانونية</small><b>${legal?'الإفصاح مشروع':'الإفصاح غير مثبت المشروعية'}</b></div>`;
+ $('cmp').hidden=false;
+ $('asked').innerHTML=q.data.length?q.data.map(d=>`<li>${DATA[d]}</li>`).join(''):'<li>لا شيء</li>';
+ $('granted').innerHTML=legal?q.data.map(d=>r.scope.includes(d)?`<li class="g">${DATA[d]}</li>`:`<li class="x">${DATA[d]}</li>`).join(''):'<li class="x">لا تُشارك أي بيانات</li>';
+ $('fixwrap').innerHTML=r.end==='rev'&&r.extra.length&&bad===r.out[2]?'<button type="button" class="fix" id="fix">تقليص البيانات وإعادة التقييم</button>':'';
+ if($('fix'))$('fix').onclick=()=>{document.querySelectorAll('#data input').forEach(x=>{if(r.extra.includes(x.value))x.checked=false});$('req').requestSubmit()};
+ const id=`LDGF-1448-${String(seq++).padStart(4,'0')}`,now=new Date().toLocaleString('ar-SA-u-nu-latn',{dateStyle:'short',timeStyle:'short'});
+ const rec={id,now,to:RECIP[q.recip][0],cls:r.cls==='?'?'غير واضح':CLS[r.cls][0],intl:q.loc==='out'?(q.adequate?'ينطبق — مستوفى':'ينطبق — غير مستوفى'):'لا ينطبق',basis:BASIS[q.basis],pur:PURP[q.purpose][0],scope:legal?r.scope.map(d=>DATA[d]).join('، '):'—',appr:$('appr').selectedOptions[0].text,dec:V[1],why:bad?bad.m:'استيفاء الشروط'};
+ $('rec').hidden=false;
+ $('rec').innerHTML=`<div class="rechead"><b>سجل الإفصاح الموثّق · ${id}</b><button type="button" id="copy">نسخ السجل</button></div>
+ <dl><dt>التاريخ</dt><dd>${now}</dd><dt>المستلم</dt><dd>${rec.to}</dd><dt>تصنيف العلاقة</dt><dd>${rec.cls}</dd><dt>النقل الدولي</dt><dd>${rec.intl}</dd><dt>المسوّغ</dt><dd>${rec.basis}</dd><dt>الغرض</dt><dd>${rec.pur}</dd><dt>نطاق البيانات</dt><dd>${rec.scope}</dd><dt>المعتمِد</dt><dd>${rec.appr}</dd><dt>القرار</dt><dd><b>${rec.dec}</b> — ${rec.why}</dd></dl>
+ <div class="law">${r.laws.map(l=>`<span>${lawName[l]}</span>`).join('')}</div>`;
+ $('copy').onclick=async e=>{const t=Object.entries({'رقم القرار':id,'التاريخ':now,'المستلم':rec.to,'التصنيف':rec.cls,'النقل الدولي':rec.intl,'المسوّغ':rec.basis,'الغرض':rec.pur,'النطاق':rec.scope,'المعتمِد':rec.appr,'القرار':rec.dec+' — '+rec.why}).map(([k,v])=>k+': '+v).join('\n');
+  try{await navigator.clipboard.writeText(t);e.target.textContent='تم النسخ'}catch(_){e.target.textContent='تعذّر النسخ'}};
+ LOG.unshift({...rec,end:r.end});drawLog();
+}
+function drawLog(){const c={pass:0,fail:0,rev:0};LOG.forEach(l=>c[l.end]++);
+ $('kpis').innerHTML=`<div><b>${LOG.length}</b>طلبات مقيّمة</div><div style="color:var(--ok)"><b>${c.pass}</b>مشاركة مشروطة</div><div style="color:var(--no)"><b>${c.fail}</b>منع مسبّب</div><div style="color:var(--rv)"><b>${c.rev}</b>بانتظار المراجعة</div>`;
+ $('logempty').hidden=LOG.length>0;const col={pass:'#1F7A4D',fail:'#9B2335',rev:'#A86A12'};
+ $('logrows').innerHTML=LOG.map(l=>`<tr><td>${l.id}</td><td>${l.to}</td><td>${l.cls}</td><td>${l.basis}</td><td><span class="pill" style="background:${col[l.end]}">${l.dec}</span></td><td>${l.why}</td></tr>`).join('')}
+const idle=()=>{clearInterval(timer);drawStages();drawCls(null,false);$('verdict').className='verdict v-idle';$('verdict').innerHTML='<h3>بانتظار التقييم</h3><p>راجع بيانات الطلب، ثم اضغط «تقييم الطلب» لتظهر النتيجة.</p>';$('cmp').hidden=true;$('duo').hidden=true;$('rec').hidden=true;$('fixwrap').innerHTML=''};
+$('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#presets button').forEach(x=>x.classList.toggle('on',x===b));load(PRESETS[+b.dataset.i]);idle()});
+$('req').addEventListener('input',idle);$('req').addEventListener('change',idle);
+$('req').addEventListener('submit',e=>{e.preventDefault();const q=read(),r=evaluate(q);clearInterval(timer);
+ const showCls=()=>drawCls(r.cls==='?'?null:r.cls,q.loc==='out');
+ if(reduce){showCls();drawStages(r.out);render(q,r);return}
+ let k=0;drawStages([]);showCls();$('fixwrap').innerHTML='';$('verdict').className='verdict v-idle';$('verdict').innerHTML='<h3>جارٍ التحقق…</h3><p>يمر الطلب بمراحل خريطة القرار بالتسلسل.</p>';
+ timer=setInterval(()=>{k++;drawStages(r.out.slice(0,k));if(k>=5){clearInterval(timer);render(q,r)}},400)});
+drawLog();load(PRESETS[0]);document.querySelector('#presets button').classList.add('on');idle();
+}
+</script>
+</body>
+</html>
